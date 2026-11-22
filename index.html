@@ -430,6 +430,11 @@
     <div class="form-row"><label>Email 1</label><input type="email" id="cfg-email1"/></div>
     <div class="form-row" style="margin-top:10px"><label>Email 2</label><input type="email" id="cfg-email2"/></div>
 
+    <div class="modal-sep">📑 Historial de cuotas</div>
+    <button class="btn btn-secondary" type="button" onclick="migrarHistorico()" style="width:100%; font-size:0.82rem">
+      📥 Cargar historial real desde tabla (7 cuotas + Inicial)
+    </button>
+
     <div class="modal-actions">
       <button class="btn btn-primary" onclick="saveConfig()">💾 Guardar</button>
       <button class="btn btn-secondary" onclick="closeModal('modal-config')">Cancelar</button>
@@ -445,11 +450,29 @@
 //  GOOGLE APPS SCRIPT BACKEND — 100% GRATIS
 // =====================================================
 
-const DEFAULT_URL = "https://script.google.com/macros/s/AKfycbzzLEnVCeiIy2J3ijVagSMoUShoxbxs2tGLdWQ0Zx0t79mfvdayVtd9ILbQd2_jy3X3/exec";
-let API_URL = localStorage.getItem("cuotas_api_url") || DEFAULT_URL;
+const DEFAULT_URL = "https://script.google.com/macros/s/AKfycbzlafI3ubtNRT_dI3Ay7FTU4hfIotrv7F0tnQitj0FK5as0QtMYjOG4ebIcjxfIUn5O/exec";
+let saved = localStorage.getItem("cuotas_api_url");
+if (!saved || saved.includes("AKfycbzzLEnVCei")) {
+  saved = DEFAULT_URL;
+  localStorage.setItem("cuotas_api_url", DEFAULT_URL);
+}
+let API_URL = saved;
 let configData = null;
 let cuotasPagadasActual = 0;
 let mesActualPagado = false;
+
+// ---- Migración rápida de datos ----
+async function migrarHistorico() {
+  if (!confirm("¿Deseas cargar el historial real de pagos (7 cuotas + 2 abonos iniciales)? Esto reemplazará los pagos de prueba.")) return;
+  showToast("⏳ Migrando historial...");
+  try {
+    const res = await api({ action: "migrarHistorico" });
+    if (res.error) throw new Error(res.error);
+    showToast("✅ " + res.mensaje);
+    closeModal("modal-config");
+    await cargarDatos();
+  } catch(e) { showToast("❌ Error: " + e.message, "error"); }
+}
 
 // ---- Init ----
 (function init() {
