@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>🚐 Cuotas Camioneta</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --surface: #1e293b;
+      --surface2: #273449;
+      --border: #334155;
+      --accent: #38bdf8;
+      --accent2: #0ea5e9;
+      --green: #22c55e;
+      --yellow: #facc15;
+      --red: #f87171;
+      --text: #f1f5f9;
+      --muted: #94a3b8;
+      --radius: 14px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      min-height: 100vh;
+      padding: 20px 16px 80px;
+    }
+    .container { max-width: 680px; margin: 0 auto; }
+
+    h1 {
+      text-align: center;
+      font-size: 1.55rem;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    .subtitle {
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.82rem;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    .dot {
+      display: inline-block;
+      width: 7px; height: 7px;
+      background: var(--green);
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+    /* ===== SETUP BANNER ===== */
+    #setup-banner {
+      background: linear-gradient(135deg,#1e3a5f,#0f2a45);
+      border: 1px solid #38bdf844;
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-bottom: 24px;
+      display: none;
+    }
+    #setup-banner h2 { font-size: 1rem; margin-bottom: 14px; color: var(--accent); }
+    .setup-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    @media(max-width:500px){ .setup-grid{grid-template-columns:1fr} }
+    .setup-grid label { font-size: 0.78rem; color: var(--muted); display: block; margin-bottom: 4px; }
+    .setup-grid input {
+      width: 100%; padding: 8px 12px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-size: 0.9rem;
+    }
+    .full-col { grid-column: 1/-1; }
+    .btn-save-setup {
+      grid-column: 1/-1;
+      padding: 11px;
+      background: var(--accent2);
+      border: none; border-radius: 8px;
+      color: #fff; font-weight: 600;
+      cursor: pointer; font-size: 0.95rem;
+    }
+    .btn-save-setup:hover { background: #0284c7; }
+
+    /* ===== API URL input ===== */
+    #api-setup {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px;
+      margin-bottom: 20px;
+    }
+    #api-setup p { font-size:0.85rem; color:var(--muted); margin-bottom:10px; }
+    #api-setup .api-row { display:flex; gap:8px; }
+    #api-setup input {
+      flex:1; padding:9px 12px;
+      background:var(--surface2); border:1px solid var(--border);
+      border-radius:8px; color:var(--text); font-size:0.85rem;
+    }
+    #api-setup button {
+      padding:9px 16px; background:var(--accent2);
+      border:none; border-radius:8px; color:#fff;
+      font-weight:600; cursor:pointer; white-space:nowrap;
+    }
+
+    /* ===== CARDS ===== */
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit,minmax(145px,1fr));
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 14px;
+      text-align: center;
+    }
+    .card .label { font-size:0.68rem; color:var(--muted); text-transform:uppercase; letter-spacing:.05em; margin-bottom:5px; }
+    .card .value { font-size:1.4rem; font-weight:700; }
+    .card.accent .value { color:var(--accent); }
+    .card.green  .value { color:var(--green); }
+    .card.yellow .value { color:var(--yellow); }
+
+    /* ===== PROGRESS ===== */
+    .progress-wrap { margin-bottom: 20px; }
+    .prog-label {
+      display:flex; justify-content:space-between;
+      font-size:0.78rem; color:var(--muted); margin-bottom:5px;
+    }
+    .progress-bar {
+      height:10px; background:var(--surface2);
+      border-radius:999px; overflow:hidden;
+    }
+    .progress-fill {
+      height:100%;
+      background: linear-gradient(90deg,var(--accent2),var(--green));
+      border-radius:999px; transition:width .6s ease;
+    }
+
+    /* ===== NEXT BOX ===== */
+    .next-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 18px;
+      margin-bottom: 20px;
+      display:flex; align-items:center;
+      justify-content:space-between; flex-wrap:wrap; gap:10px;
+    }
+    .next-box .tag { font-size:0.7rem; text-transform:uppercase; color:var(--muted); letter-spacing:.05em; }
+    .next-box .cuota-num { font-size:1.05rem; font-weight:700; margin:3px 0; }
+    .next-box .cuota-val { font-size:0.85rem; color:var(--muted); }
+    .badge {
+      padding:5px 13px; border-radius:999px;
+      font-size:0.78rem; font-weight:600; white-space:nowrap;
+    }
+    .badge.paid   { background:#16a34a33; color:var(--green);  border:1px solid #22c55e55; }
+    .badge.pending{ background:#ca8a0433; color:var(--yellow); border:1px solid #facc1555; }
+    .badge.overdue{ background:#dc262633; color:var(--red);    border:1px solid #f8717155; }
+
+    /* ===== ACTIONS ===== */
+    .actions { display:flex; gap:10px; margin-bottom:22px; flex-wrap:wrap; }
+    .btn {
+      flex:1; min-width:130px;
+      padding:11px 18px; border:none; border-radius:10px;
+      font-size:0.9rem; font-weight:600; cursor:pointer;
+      display:flex; align-items:center; justify-content:center;
+      gap:6px; text-decoration:none;
+      transition:opacity .2s, transform .1s;
+    }
+    .btn:active { transform:scale(.97); }
+    .btn-pay     { background:linear-gradient(135deg,#16a34a,#22c55e); color:#fff; }
+    .btn-primary { background:var(--accent2); color:#fff; }
+    .btn-secondary { background:var(--surface2); color:var(--text); border:1px solid var(--border); }
+    .btn:hover { opacity:.88; }
+
+    /* ===== PAY FORM ===== */
+    #pay-form {
+      background:var(--surface); border:1px solid var(--border);
+      border-radius:var(--radius); padding:20px;
+      margin-bottom:22px; display:none;
+    }
+    #pay-form h3 { font-size:1rem; margin-bottom:14px; }
+    .form-row { margin-bottom:11px; }
+    .form-row label { font-size:0.78rem; color:var(--muted); display:block; margin-bottom:3px; }
+    .form-row input, .form-row select, .form-row textarea {
+      width:100%; padding:9px 12px;
+      background:var(--surface2); border:1px solid var(--border);
+      border-radius:8px; color:var(--text); font-size:0.9rem;
+    }
+    .form-row textarea { resize:vertical; height:56px; }
+    .form-actions { display:flex; gap:10px; margin-top:12px; }
+    .form-actions .btn { flex:1; }
+
+    /* ===== HISTORIAL ===== */
+    .section-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
+    .section-header h2 { font-size:1rem; }
+    #history-list { display:flex; flex-direction:column; gap:9px; }
+    .history-item {
+      background:var(--surface); border:1px solid var(--border);
+      border-radius:10px; padding:13px 15px;
+      display:flex; align-items:center; gap:12px;
+    }
+    .history-icon {
+      width:36px; height:36px; border-radius:50%;
+      display:flex; align-items:center; justify-content:center;
+      font-size:1rem; flex-shrink:0;
+    }
+    .history-icon.payment { background:#16a34a22; }
+    .history-icon.partial  { background:#ca8a0422; }
+    .history-info { flex:1; }
+    .history-info .h-title { font-size:0.88rem; font-weight:600; }
+    .history-info .h-meta  { font-size:0.73rem; color:var(--muted); margin-top:2px; }
+    .history-amount { font-weight:700; }
+    .history-amount.payment { color:var(--green); }
+    .history-amount.partial { color:var(--yellow); }
+    .empty-state { text-align:center; padding:28px; color:var(--muted); font-size:0.88rem; }
+
+    /* ===== LOADER ===== */
+    .loader { display:flex; justify-content:center; padding:36px; }
+    .spinner {
+      width:34px; height:34px;
+      border:3px solid var(--border); border-top-color:var(--accent);
+      border-radius:50%; animation:spin .7s linear infinite;
+    }
+    @keyframes spin { to { transform:rotate(360deg); } }
+
+    /* ===== CONFIG MODAL ===== */
+    .modal-overlay {
+      position:fixed; inset:0; background:#00000090;
+      display:none; align-items:center; justify-content:center;
+      z-index:999; padding:16px;
+    }
+    .modal {
+      background:var(--surface); border:1px solid var(--border);
+      border-radius:var(--radius); padding:22px;
+      width:100%; max-width:430px; max-height:85vh; overflow-y:auto;
+    }
+    .modal h2 { font-size:1rem; margin-bottom:14px; }
+    .modal-actions { display:flex; gap:10px; margin-top:14px; }
+    .modal-actions .btn { flex:1; }
+
+    /* ===== TOAST ===== */
+    #toast {
+      position:fixed; bottom:22px; right:22px;
+      background:var(--surface2); border:1px solid var(--border);
+      color:var(--text); padding:11px 18px;
+      border-radius:10px; font-size:0.88rem;
+      box-shadow:0 8px 24px #0005;
+      opacity:0; transform:translateY(10px);
+      transition:opacity .3s, transform .3s;
+      z-index:9999; pointer-events:none; max-width:280px;
+    }
+    #toast.show { opacity:1; transform:translateY(0); }
+    #toast.success { border-color:#22c55e55; }
+    #toast.error   { border-color:#f8717155; }
+
+    /* ===== CONFIG BUTTON ===== */
+    .config-btn {
+      position:fixed; bottom:22px; left:22px;
+      width:40px; height:40px; background:var(--surface2);
+      border:1px solid var(--border); border-radius:50%;
+      display:flex; align-items:center; justify-content:center;
+      font-size:1.05rem; cursor:pointer; z-index:100;
+      transition:background .2s;
+    }
+    .config-btn:hover { background:var(--border); }
+
+    /* ===== REFRESH BTN ===== */
+    .refresh-btn {
+      background:transparent; border:1px solid var(--border);
+      color:var(--muted); border-radius:8px; padding:4px 10px;
+      font-size:0.75rem; cursor:pointer;
+    }
+    .refresh-btn:hover { background:var(--surface2); }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <h1>🚐 Cuotas Camioneta</h1>
+  <p class="subtitle"><span class="dot"></span> Datos compartidos en tiempo real</p>
+
+  <!-- Paso 1: ingresar URL del script -->
+  <div id="api-setup">
+    <p>🔗 Pega aquí la URL de tu Google Apps Script (ver INSTRUCCIONES.md):</p>
+    <div class="api-row">
+      <input type="url" id="api-url-input" placeholder="https://script.google.com/macros/s/.../exec"/>
+      <button onclick="guardarApiUrl()">Conectar</button>
+    </div>
+  </div>
+
+  <!-- Setup inicial del crédito -->
+  <div id="setup-banner">
+    <h2>⚙️ Configura el crédito por primera vez</h2>
+    <div class="setup-grid">
+      <div>
+        <label>Valor total del crédito ($)</label>
+        <input type="number" id="setup-total" placeholder="Ej: 45000000"/>
+      </div>
+      <div>
+        <label>Número total de cuotas</label>
+        <input type="number" id="setup-cuotas" placeholder="Ej: 60"/>
+      </div>
+      <div>
+        <label>Valor de cada cuota ($)</label>
+        <input type="number" id="setup-cuota-val" placeholder="Ej: 900000"/>
+      </div>
+      <div>
+        <label>Día del mes de pago</label>
+        <input type="number" id="setup-dia" placeholder="Ej: 15" min="1" max="31"/>
+      </div>
+      <div>
+        <label>Fecha de inicio (1ra cuota)</label>
+        <input type="date" id="setup-inicio"/>
+      </div>
+      <div>
+        <label>Cuotas ya pagadas antes de hoy</label>
+        <input type="number" id="setup-ya-pagadas" value="0" min="0"/>
+      </div>
+      <div class="full-col">
+        <label>Enlace de pago (URL del banco / PSE)</label>
+        <input type="url" id="setup-url" placeholder="https://..."/>
+      </div>
+      <div class="full-col">
+        <label>Nombre del vehículo</label>
+        <input type="text" id="setup-nombre" placeholder="Ej: Renault Kangoo 2023"/>
+      </div>
+      <button class="btn-save-setup" onclick="saveSetup()">💾 Guardar configuración</button>
+    </div>
+  </div>
+
+  <!-- Loader -->
+  <div class="loader" id="loader" style="display:none"><div class="spinner"></div></div>
+
+  <!-- Contenido principal -->
+  <div id="main-content" style="display:none">
+
+    <!-- Cards -->
+    <div class="cards-grid">
+      <div class="card accent">
+        <div class="label">Valor Total</div>
+        <div class="value" id="card-total">—</div>
+      </div>
+      <div class="card green">
+        <div class="label">Total Pagado</div>
+        <div class="value" id="card-pagado">—</div>
+      </div>
+      <div class="card yellow">
+        <div class="label">Saldo Pendiente</div>
+        <div class="value" id="card-pendiente">—</div>
+      </div>
+      <div class="card">
+        <div class="label">Cuotas Totales</div>
+        <div class="value" id="card-cuotas-total">—</div>
+      </div>
+      <div class="card green">
+        <div class="label">Cuotas Pagadas</div>
+        <div class="value" id="card-cuotas-pagadas">—</div>
+      </div>
+      <div class="card yellow">
+        <div class="label">Cuotas Restantes</div>
+        <div class="value" id="card-cuotas-rest">—</div>
+      </div>
+    </div>
+
+    <!-- Progreso -->
+    <div class="progress-wrap">
+      <div class="prog-label">
+        <span>Progreso del crédito</span>
+        <span id="prog-pct">0%</span>
+      </div>
+      <div class="progress-bar">
+        <div class="progress-fill" id="prog-fill" style="width:0%"></div>
+      </div>
+    </div>
+
+    <!-- Próxima cuota -->
+    <div class="next-box">
+      <div>
+        <div class="tag">Próxima cuota a pagar</div>
+        <div class="cuota-num" id="next-cuota-num">—</div>
+        <div class="cuota-val" id="next-cuota-val">—</div>
+      </div>
+      <span class="badge" id="mes-badge">—</span>
+    </div>
+
+    <!-- Acciones -->
+    <div class="actions">
+      <a id="btn-ir-pagar" class="btn btn-pay" href="#" target="_blank" rel="noopener">💳 Ir a Pagar</a>
+      <button class="btn btn-primary" onclick="togglePayForm()">✅ Registrar Pago</button>
+    </div>
+
+    <!-- Formulario registro pago -->
+    <div id="pay-form">
+      <h3>Registrar movimiento</h3>
+      <div class="form-row">
+        <label>Tipo de movimiento</label>
+        <select id="f-tipo">
+          <option value="cuota">Cuota completa</option>
+          <option value="abono">Abono parcial</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label>Valor pagado ($)</label>
+        <input type="number" id="f-valor" placeholder="Ej: 900000"/>
+      </div>
+      <div class="form-row">
+        <label>Fecha del pago</label>
+        <input type="date" id="f-fecha"/>
+      </div>
+      <div class="form-row">
+        <label>Número de cuota que cubre (ej: 5)</label>
+        <input type="text" id="f-cuota-num" placeholder="Ej: 5"/>
+      </div>
+      <div class="form-row">
+        <label>¿Quién pagó?</label>
+        <input type="text" id="f-quien" placeholder="Tu nombre"/>
+      </div>
+      <div class="form-row">
+        <label>Nota / Referencia (opcional)</label>
+        <textarea id="f-nota" placeholder="Ej: Bancolombia transferencia #1234"></textarea>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-primary" onclick="registrarPago()">💾 Guardar</button>
+        <button class="btn btn-secondary" onclick="togglePayForm()">Cancelar</button>
+      </div>
+    </div>
+
+    <!-- Historial -->
+    <div class="section-header">
+      <h2>📋 Historial de movimientos</h2>
+      <button class="refresh-btn" onclick="cargarDatos()">↻ Actualizar</button>
+    </div>
+    <div id="history-list">
+      <div class="empty-state">Cargando...</div>
+    </div>
+
+  </div><!-- /main-content -->
+</div>
+
+<!-- Config modal -->
+<div class="modal-overlay" id="config-modal" onclick="if(event.target===this)closeConfig()">
+  <div class="modal">
+    <h2>⚙️ Editar configuración</h2>
+    <div class="form-row">
+      <label>Valor total del crédito ($)</label>
+      <input type="number" id="cfg-total"/>
+    </div>
+    <div class="form-row">
+      <label>Número total de cuotas</label>
+      <input type="number" id="cfg-cuotas"/>
+    </div>
+    <div class="form-row">
+      <label>Valor de cada cuota ($)</label>
+      <input type="number" id="cfg-cuota-val"/>
+    </div>
+    <div class="form-row">
+      <label>Día del mes de pago</label>
+      <input type="number" id="cfg-dia" min="1" max="31"/>
+    </div>
+    <div class="form-row">
+      <label>Fecha de inicio (1ra cuota)</label>
+      <input type="date" id="cfg-inicio"/>
+    </div>
+    <div class="form-row">
+      <label>Enlace de pago (URL)</label>
+      <input type="url" id="cfg-url"/>
+    </div>
+    <div class="form-row">
+      <label>Nombre del vehículo</label>
+      <input type="text" id="cfg-nombre"/>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-primary" onclick="saveConfig()">Guardar</button>
+      <button class="btn btn-secondary" onclick="closeConfig()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+<button class="config-btn" onclick="openConfig()" title="Configuración">⚙️</button>
+
+<script>
+// =====================================================
+//  GOOGLE APPS SCRIPT BACKEND — 100% GRATIS
+// =====================================================
+
+let API_URL = localStorage.getItem("cuotas_api_url") || "https://script.google.com/macros/s/AKfycbzzLEnVCeiIy2J3ijVagSMoUShoxbxs2tGLdWQ0Zx0t79mfvdayVtd9ILbQd2_jy3X3/exec";
+let configData = null;
+
+// ---- Inicializar ----
+(function init() {
+  if (API_URL) {
+    document.getElementById("api-url-input").value = API_URL;
+    document.getElementById("api-setup").style.display = "none";
+    cargarDatos();
+  }
+})();
+
+function guardarApiUrl() {
+  const url = document.getElementById("api-url-input").value.trim();
+  if (!url.startsWith("https://script.google.com")) {
+    showToast("⚠️ URL inválida. Debe ser de Google Apps Script", "error"); return;
+  }
+  API_URL = url;
+  localStorage.setItem("cuotas_api_url", API_URL);
+  document.getElementById("api-setup").style.display = "none";
+  cargarDatos();
+  showToast("✅ URL guardada");
+}
+
+// ---- Utilidades ----
+function fmt(n) {
+  if (n == null || isNaN(n)) return "—";
+  return "$" + Math.round(n).toLocaleString("es-CO");
+}
+function fmtDate(str) {
+  if (!str) return "—";
+  const d = new Date(str + (str.includes("T") ? "" : "T12:00:00"));
+  return d.toLocaleDateString("es-CO", { day:"2-digit", month:"short", year:"numeric" });
+}
+function showToast(msg, type="success") {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.className = "show " + type;
+  setTimeout(() => { t.className = ""; }, 3200);
+}
+
+// ---- API calls ----
+async function api(params) {
+  const url = new URL(API_URL);
+  Object.entries(params).forEach(([k,v]) => url.searchParams.set(k, v));
+  const res = await fetch(url.toString());
+  return res.json();
+}
+
+async function apiPost(data) {
+  const res = await fetch(API_URL, {
+    method: "POST",
+    body: JSON.stringify(data)
+  });
+  return res.json();
+}
+
+// ---- Cargar datos ----
+async function cargarDatos() {
+  if (!API_URL) return;
+  document.getElementById("loader").style.display = "flex";
+  document.getElementById("main-content").style.display = "none";
+  try {
+    const data = await api({ action: "getData" });
+    if (data.error) throw new Error(data.error);
+
+    if (!data.config || !data.config.valorTotal) {
+      document.getElementById("loader").style.display = "none";
+      document.getElementById("setup-banner").style.display = "block";
+      return;
+    }
+    configData = data.config;
+    renderMain();
+    renderPagos(data.pagos || []);
+  } catch(e) {
+    document.getElementById("loader").style.display = "none";
+    showToast("❌ Error al cargar: " + e.message, "error");
+    console.error(e);
+  }
+}
+
+// ---- Render principal ----
+function renderMain() {
+  document.getElementById("loader").style.display = "none";
+  document.getElementById("setup-banner").style.display = "none";
+  document.getElementById("main-content").style.display = "block";
+  document.title = "🚐 " + (configData.nombre || "Cuotas Camioneta");
+  document.getElementById("card-total").textContent = fmt(configData.valorTotal);
+  document.getElementById("card-cuotas-total").textContent = configData.numCuotas;
+  document.getElementById("btn-ir-pagar").href = configData.urlPago || "#";
+}
+
+// ---- Render pagos ----
+function renderPagos(pagos) {
+  const cfg = configData;
+  let cuotasPagadas = parseInt(cfg.cuotasYaPagadas) || 0;
+  let totalPagado = 0;
+
+  pagos.forEach(p => {
+    if (p.tipo === "cuota") cuotasPagadas += 1;
+    totalPagado += parseFloat(p.valor || 0);
+  });
+
+  const restantes = cfg.numCuotas - cuotasPagadas;
+  const saldo = cfg.valorTotal - totalPagado;
+  const pct = Math.min(100, Math.round((cuotasPagadas / cfg.numCuotas) * 100));
+
+  document.getElementById("card-pagado").textContent = fmt(totalPagado);
+  document.getElementById("card-pendiente").textContent = fmt(Math.max(0, saldo));
+  document.getElementById("card-cuotas-pagadas").textContent = cuotasPagadas;
+  document.getElementById("card-cuotas-rest").textContent = Math.max(0, restantes);
+  document.getElementById("prog-pct").textContent = pct + "%";
+  document.getElementById("prog-fill").style.width = pct + "%";
+
+  // Próxima cuota
+  const proxNum = cuotasPagadas + 1;
+  if (proxNum <= cfg.numCuotas) {
+    document.getElementById("next-cuota-num").textContent = `Cuota #${proxNum} de ${cfg.numCuotas}`;
+    document.getElementById("next-cuota-val").textContent =
+      `Valor: ${fmt(cfg.valorCuota)} · Vence día ${cfg.diaPago} de cada mes`;
+    document.getElementById("f-cuota-num").value = proxNum;
+    document.getElementById("f-valor").value = cfg.valorCuota;
+  } else {
+    document.getElementById("next-cuota-num").textContent = "¡Crédito completado! 🎉";
+    document.getElementById("next-cuota-val").textContent = "Todas las cuotas han sido pagadas";
+  }
+
+  // Estado mes actual
+  const hoy = new Date();
+  const mesActual = `${hoy.getFullYear()}-${String(hoy.getMonth()+1).padStart(2,"0")}`;
+  const pagoMes = pagos.find(p => {
+    const f = new Date(p.fecha + "T12:00:00");
+    return `${f.getFullYear()}-${String(f.getMonth()+1).padStart(2,"0")}` === mesActual;
+  });
+  const badge = document.getElementById("mes-badge");
+  if (cuotasPagadas >= cfg.numCuotas) {
+    badge.textContent = "✅ Crédito cancelado"; badge.className = "badge paid";
+  } else if (pagoMes) {
+    badge.textContent = "✅ Mes actual pagado"; badge.className = "badge paid";
+  } else if (hoy.getDate() > cfg.diaPago) {
+    badge.textContent = "⚠️ Mes vencido"; badge.className = "badge overdue";
+  } else {
+    badge.textContent = `🕐 Vence el día ${cfg.diaPago}`; badge.className = "badge pending";
+  }
+
+  // Historial
+  const list = document.getElementById("history-list");
+  if (!pagos.length) {
+    list.innerHTML = `<div class="empty-state">📭 Aún no hay movimientos registrados</div>`;
+    return;
+  }
+  // Mostrar más recientes primero
+  const sorted = [...pagos].reverse();
+  list.innerHTML = sorted.map(p => {
+    const isCuota = p.tipo === "cuota";
+    const icon = isCuota ? "✅" : "💰";
+    const cls = isCuota ? "payment" : "partial";
+    const tipoLabel = isCuota ? "Cuota completa" : "Abono parcial";
+    const cuotaInfo = p.cuotaNum ? ` · Cuota #${p.cuotaNum}` : "";
+    const nota = p.nota ? ` · ${p.nota}` : "";
+    const quien = p.quien ? ` · 👤 ${p.quien}` : "";
+    return `
+      <div class="history-item">
+        <div class="history-icon ${cls}">${icon}</div>
+        <div class="history-info">
+          <div class="h-title">${tipoLabel}${cuotaInfo}</div>
+          <div class="h-meta">${fmtDate(p.fecha)}${nota}${quien}</div>
+        </div>
+        <div class="history-amount ${cls}">${fmt(p.valor)}</div>
+      </div>`;
+  }).join("");
+}
+
+// ---- Registrar pago ----
+async function registrarPago() {
+  const valor = parseFloat(document.getElementById("f-valor").value);
+  const fecha = document.getElementById("f-fecha").value;
+  if (!valor || !fecha) { showToast("⚠️ Completa valor y fecha", "error"); return; }
+
+  const pago = {
+    action: "addPago",
+    tipo: document.getElementById("f-tipo").value,
+    valor,
+    fecha,
+    cuotaNum: document.getElementById("f-cuota-num").value,
+    quien: document.getElementById("f-quien").value,
+    nota: document.getElementById("f-nota").value,
+  };
+
+  try {
+    showToast("⏳ Guardando...");
+    const res = await apiPost(pago);
+    if (res.error) throw new Error(res.error);
+    showToast("✅ Pago registrado");
+    togglePayForm();
+    document.getElementById("f-nota").value = "";
+    document.getElementById("f-quien").value = "";
+    await cargarDatos();
+  } catch(e) { showToast("❌ Error: " + e.message, "error"); }
+}
+
+// ---- Setup ----
+async function saveSetup() {
+  const data = {
+    action: "saveConfig",
+    valorTotal: parseFloat(document.getElementById("setup-total").value) || 0,
+    numCuotas: parseInt(document.getElementById("setup-cuotas").value) || 0,
+    valorCuota: parseFloat(document.getElementById("setup-cuota-val").value) || 0,
+    diaPago: parseInt(document.getElementById("setup-dia").value) || 1,
+    fechaInicio: document.getElementById("setup-inicio").value,
+    urlPago: document.getElementById("setup-url").value || "#",
+    nombre: document.getElementById("setup-nombre").value || "Camioneta",
+    cuotasYaPagadas: parseInt(document.getElementById("setup-ya-pagadas").value) || 0,
+  };
+  if (!data.valorTotal || !data.numCuotas || !data.valorCuota) {
+    showToast("⚠️ Completa los campos obligatorios", "error"); return;
+  }
+  try {
+    showToast("⏳ Guardando...");
+    const res = await apiPost(data);
+    if (res.error) throw new Error(res.error);
+    showToast("✅ Configuración guardada");
+    await cargarDatos();
+  } catch(e) { showToast("❌ Error: " + e.message, "error"); }
+}
+
+// ---- Config modal ----
+function openConfig() {
+  if (!configData) return;
+  document.getElementById("cfg-total").value = configData.valorTotal || "";
+  document.getElementById("cfg-cuotas").value = configData.numCuotas || "";
+  document.getElementById("cfg-cuota-val").value = configData.valorCuota || "";
+  document.getElementById("cfg-dia").value = configData.diaPago || "";
+  document.getElementById("cfg-inicio").value = configData.fechaInicio || "";
+  document.getElementById("cfg-url").value = configData.urlPago || "";
+  document.getElementById("cfg-nombre").value = configData.nombre || "";
+  document.getElementById("config-modal").style.display = "flex";
+}
+function closeConfig() { document.getElementById("config-modal").style.display = "none"; }
+async function saveConfig() {
+  const data = {
+    action: "saveConfig",
+    valorTotal: parseFloat(document.getElementById("cfg-total").value),
+    numCuotas: parseInt(document.getElementById("cfg-cuotas").value),
+    valorCuota: parseFloat(document.getElementById("cfg-cuota-val").value),
+    diaPago: parseInt(document.getElementById("cfg-dia").value),
+    fechaInicio: document.getElementById("cfg-inicio").value,
+    urlPago: document.getElementById("cfg-url").value,
+    nombre: document.getElementById("cfg-nombre").value,
+    cuotasYaPagadas: configData.cuotasYaPagadas || 0,
+  };
+  try {
+    showToast("⏳ Guardando...");
+    const res = await apiPost(data);
+    if (res.error) throw new Error(res.error);
+    closeConfig();
+    showToast("✅ Configuración actualizada");
+    await cargarDatos();
+  } catch(e) { showToast("❌ Error: " + e.message, "error"); }
+}
+
+function togglePayForm() {
+  const f = document.getElementById("pay-form");
+  f.style.display = f.style.display === "block" ? "none" : "block";
+  if (f.style.display === "block") {
+    document.getElementById("f-fecha").value = new Date().toISOString().split("T")[0];
+  }
+}
+
+// Auto-refresh cada 60 segundos
+setInterval(() => { if (API_URL && configData) cargarDatos(); }, 60000);
+</script>
+</body>
+</html>
