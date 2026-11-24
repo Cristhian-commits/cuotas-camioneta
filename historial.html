@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Historial de Movimientos — Plan Rombo</title>
+  <style>
+    /* ============================================================
+       VARIABLES — FINTECH CLEAN
+    ============================================================ */
+    :root {
+      --bg:        #F3F4F6;
+      --surface:   #FFFFFF;
+      --surface2:  #F9FAFB;
+      --border:    #E5E7EB;
+      --navy:      #1B3A5C;
+      --blue:      #2563EB;
+      --green:     #15803D;
+      --green-bg:  #F0FDF4;
+      --amber:     #B45309;
+      --amber-bg:  #FFFBEB;
+      --red:       #DC2626;
+      --red-bg:    #FEF2F2;
+      --text:      #111827;
+      --text2:     #374151;
+      --muted:     #6B7280;
+      --shadow:    0 1px 3px rgba(0,0,0,0.07), 0 1px 10px rgba(0,0,0,0.04);
+      --shadow-md: 0 4px 16px rgba(0,0,0,0.09);
+      --shadow-lg: 0 8px 32px rgba(0,0,0,0.13);
+      --radius:    12px;
+      --radius-sm: 8px;
+    }
+
+    /* ============================================================
+       RESET & BASE
+    ============================================================ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      font-size: 15px;
+      line-height: 1.5;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+    .page { max-width: 640px; margin: 0 auto; padding: 20px 16px 80px; }
+
+    /* ============================================================
+       HEADER & TOP NAV
+    ============================================================ */
+    .top-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+    .btn-back {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 14px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--navy);
+      font-size: 0.85rem;
+      font-weight: 600;
+      text-decoration: none;
+      box-shadow: var(--shadow);
+      transition: background .15s, border-color .15s;
+    }
+    .btn-back:hover {
+      background: var(--surface2);
+      border-color: #D1D5DB;
+    }
+
+    /* ============================================================
+       CARDS & SUMMARY
+    ============================================================ */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    .card + .card { margin-top: 12px; }
+
+    .summary-card {
+      padding: 18px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    .summary-title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--navy);
+    }
+    .summary-sub {
+      font-size: 0.78rem;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+    .count-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 10px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--navy);
+      white-space: nowrap;
+    }
+
+    /* ============================================================
+       LIST OF MOVEMENTS
+    ============================================================ */
+    .mov-row {
+      display: flex;
+      align-items: center;
+      padding: 14px 20px;
+      cursor: pointer;
+      transition: background .1s;
+      border-bottom: 1px solid var(--border);
+    }
+    .mov-row:last-child { border-bottom: none; }
+    .mov-row:hover { background: var(--surface2); }
+
+    .mov-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      flex-shrink: 0;
+      margin-right: 12px;
+    }
+    .mov-icon.cuota { background: #DBEAFE; color: #1D4ED8; }
+    .mov-icon.abono { background: #FEF9C3; color: #A16207; }
+
+    .mov-info { flex: 1; min-width: 0; }
+    .mov-title { font-size: 0.88rem; font-weight: 600; color: var(--text); }
+    .mov-date  { font-size: 0.75rem; color: var(--muted); margin-top: 1px; }
+
+    .mov-amt { font-size: 0.92rem; font-weight: 700; flex-shrink: 0; }
+    .mov-amt.cuota { color: var(--green); }
+    .mov-amt.abono { color: var(--amber); }
+
+    .mov-chev { color: var(--border); margin-left: 8px; font-size: 1rem; }
+    .empty-state { padding: 36px 20px; text-align: center; color: var(--muted); font-size: 0.88rem; }
+
+    /* ============================================================
+       BUTTONS
+    ============================================================ */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px 18px;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity .15s, transform .1s;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+    .btn:active { transform: scale(0.97); }
+    .btn-ghost  { background: transparent; color: var(--text2); border: 1.5px solid var(--border); }
+    .btn-ghost:hover { background: var(--surface2); }
+    .btn-full   { width: 100%; }
+
+    /* ============================================================
+       MODAL
+    ============================================================ */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.48);
+      display: none;
+      align-items: flex-end;
+      justify-content: center;
+      z-index: 1000;
+      padding: 0;
+    }
+    @media(min-width:500px){
+      .modal-overlay { align-items: center; padding: 20px; }
+    }
+    .modal-overlay.open { display: flex; }
+
+    .modal {
+      background: var(--surface);
+      border-radius: var(--radius) var(--radius) 0 0;
+      width: 100%;
+      max-height: 92vh;
+      overflow-y: auto;
+      animation: slideUp .22s ease;
+    }
+    @media(min-width:500px){
+      .modal { max-width: 440px; border-radius: var(--radius); animation: fadeScale .18s ease; }
+    }
+    @keyframes slideUp   { from { transform: translateY(36px); opacity:0; } to { transform:translateY(0); opacity:1; } }
+    @keyframes fadeScale { from { transform: scale(.96); opacity:0; } to { transform:scale(1); opacity:1; } }
+
+    .modal-handle { width: 36px; height: 4px; background: var(--border); border-radius: 2px; margin: 12px auto 0; }
+    @media(min-width:500px){ .modal-handle { display: none; } }
+
+    .modal-hdr {
+      padding: 20px 20px 0;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .modal-title { font-size: 1rem; font-weight: 700; color: var(--navy); }
+    .modal-close {
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--surface2);
+      border: none;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 1.1rem;
+      color: var(--muted);
+      flex-shrink: 0;
+      line-height: 1;
+    }
+    .modal-body   { padding: 16px 20px; }
+    .modal-footer { padding: 10px 20px 20px; }
+
+    .det-amount { font-size: 1.8rem; font-weight: 800; text-align: center; padding: 16px 0 6px; }
+    .det-amount.cuota { color: var(--green); }
+    .det-amount.abono { color: var(--amber); }
+    .det-type {
+      text-align: center;
+      font-size: 0.72rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .07em;
+      color: var(--muted);
+      margin-bottom: 16px;
+    }
+
+    .sum-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+      gap: 10px;
+    }
+    .sum-row:last-child { border-bottom: none; }
+    .sum-label { font-size: 0.8rem; color: var(--muted); flex-shrink: 0; }
+    .sum-val   { font-size: 0.88rem; font-weight: 600; color: var(--text); text-align: right; }
+
+    /* ============================================================
+       LOADER & TOAST
+    ============================================================ */
+    .loader { display: flex; justify-content: center; padding: 60px; }
+    .spinner {
+      width: 28px;
+      height: 28px;
+      border: 2.5px solid var(--border);
+      border-top-color: var(--navy);
+      border-radius: 50%;
+      animation: spin .6s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    #toast {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%) translateY(70px);
+      background: var(--navy);
+      color: #fff;
+      padding: 10px 20px;
+      border-radius: 999px;
+      font-size: 0.82rem;
+      font-weight: 500;
+      white-space: nowrap;
+      box-shadow: var(--shadow-lg);
+      z-index: 9999;
+      transition: transform .28s cubic-bezier(.34,1.56,.64,1), opacity .28s;
+      opacity: 0;
+      pointer-events: none;
+    }
+    #toast.show  { transform: translateX(-50%) translateY(0); opacity: 1; }
+    #toast.error { background: var(--red); }
+  </style>
+</head>
+<body>
+
+<div class="page">
+
+  <!-- Top bar with Back button -->
+  <div class="top-bar">
+    <a href="index.html" class="btn-back">&#x2190; Volver</a>
+  </div>
+
+  <!-- Summary info card -->
+  <div class="card summary-card">
+    <div>
+      <div class="summary-title">Historial de movimientos</div>
+      <div class="summary-sub">Registro consolidado de pagos y abonos</div>
+    </div>
+    <div class="count-badge" id="mov-count">0 movimientos</div>
+  </div>
+
+  <!-- Loader -->
+  <div class="loader" id="loader"><div class="spinner"></div></div>
+
+  <!-- Full movement list container -->
+  <div class="card" id="list-card" style="display:none">
+    <div id="hist-list"></div>
+  </div>
+
+</div>
+
+<!-- Modal: Movement Detail -->
+<div class="modal-overlay" id="m-detail" onclick="if(event.target===this)closeModal('m-detail')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-hdr">
+      <div class="modal-title">Detalle del movimiento</div>
+      <button class="modal-close" onclick="closeModal('m-detail')">&#x2715;</button>
+    </div>
+    <div class="modal-body" id="m-detail-body"></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost btn-full" onclick="closeModal('m-detail')">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ================================================================
+//  DATABASE & STORAGE CONNECTION
+// ================================================================
+const DEFAULT_URL = "https://script.google.com/macros/s/AKfycbzlafI3ubtNRT_dI3Ay7FTU4hfIotrv7F0tnQitj0FK5as0QtMYjOG4ebIcjxfIUn5O/exec";
+let stored = localStorage.getItem("cuotas_api_url");
+if (!stored || stored.includes("AKfycbzzLEnVCei")) {
+  stored = DEFAULT_URL;
+  localStorage.setItem("cuotas_api_url", DEFAULT_URL);
+}
+let API_URL = stored;
+
+let pagos = [];
+
+// ================================================================
+//  INIT
+// ================================================================
+(function init() {
+  cargarHistorial();
+})();
+
+async function apiGet(params) {
+  const url = new URL(API_URL);
+  Object.entries(params).forEach(([k,v]) => url.searchParams.set(k, v));
+  const r = await fetch(url.toString());
+  return r.json();
+}
+
+// ================================================================
+//  LOAD DATA
+// ================================================================
+async function cargarHistorial() {
+  document.getElementById("loader").style.display    = "flex";
+  document.getElementById("list-card").style.display = "none";
+  try {
+    const d = await apiGet({ action: "getData" });
+    if (d.error) throw new Error(d.error);
+    pagos = d.pagos || [];
+    renderList();
+  } catch(e) {
+    document.getElementById("loader").style.display = "none";
+    showToast("Error al cargar los movimientos", "error");
+  }
+}
+
+// ================================================================
+//  RENDER
+// ================================================================
+function renderList() {
+  document.getElementById("loader").style.display    = "none";
+  document.getElementById("list-card").style.display = "block";
+
+  const total = pagos.length;
+  document.getElementById("mov-count").textContent = `${total} ${total === 1 ? 'movimiento' : 'movimientos'}`;
+
+  const container = document.getElementById("hist-list");
+  if (!total) {
+    container.innerHTML = `<div class="empty-state">No hay movimientos registrados</div>`;
+    return;
+  }
+
+  const list = [...pagos].reverse();
+  container.innerHTML = list.map((p, i) => {
+    const isCuota = p.tipo === "cuota";
+    const cls = isCuota ? "cuota" : "abono";
+    const lbl = isCuota ? "CUO" : "ABO";
+    const title = `${isCuota ? "Cuota" : "Abono"}${p.cuotaNum ? " #" + p.cuotaNum : ""}`;
+    return `
+      <div class="mov-row" onclick="verDetalle(${i})">
+        <div class="mov-icon ${cls}">${lbl}</div>
+        <div class="mov-info">
+          <div class="mov-title">${title}</div>
+          <div class="mov-date">${fmtDate(p.fecha)}${p.quien ? " · " + p.quien : ""}</div>
+        </div>
+        <div class="mov-amt ${cls}">${fmt(p.valor)}</div>
+        <div class="mov-chev">&#x203A;</div>
+      </div>`;
+  }).join("");
+}
+
+// ================================================================
+//  DETAIL MODAL
+// ================================================================
+function verDetalle(idx) {
+  const list = [...pagos].reverse();
+  const p = list[idx];
+  if (!p) return;
+
+  const isCuota = p.tipo === "cuota";
+  document.getElementById("m-detail-body").innerHTML = `
+    <div class="det-amount ${isCuota ? 'cuota' : 'abono'}">${fmt(p.valor)}</div>
+    <div class="det-type">${isCuota ? 'CUOTA MENSUAL' : 'ABONO PARCIAL'}${p.cuotaNum ? ' #' + p.cuotaNum : ''}</div>
+    <div class="sum-row"><span class="sum-label">Tipo</span><span class="sum-val">${isCuota ? 'Cuota mensual' : 'Abono parcial'}</span></div>
+    <div class="sum-row"><span class="sum-label">${isCuota ? 'Numero de cuota' : 'Numero de abono'}</span><span class="sum-val">${p.cuotaNum ? '#' + p.cuotaNum : '—'}</span></div>
+    <div class="sum-row"><span class="sum-label">Fecha</span><span class="sum-val">${fmtDate(p.fecha)}</span></div>
+    <div class="sum-row"><span class="sum-label">Quien pago</span><span class="sum-val">${p.quien || '—'}</span></div>
+    ${p.nota ? `<div class="sum-row"><span class="sum-label">Nota</span><span class="sum-val">${p.nota}</span></div>` : ''}`;
+
+  openModal("m-detail");
+}
+
+// ================================================================
+//  HELPERS
+// ================================================================
+function openModal(id)  { document.getElementById(id).classList.add("open"); }
+function closeModal(id) { document.getElementById(id).classList.remove("open"); }
+
+function fmt(n) {
+  if (n == null || isNaN(n)) return "—";
+  return "$" + Math.round(n).toLocaleString("es-CO");
+}
+
+function fmtDate(str) {
+  if (!str) return "—";
+  const d = new Date(str.includes("T") ? str : str + "T12:00:00");
+  return d.toLocaleDateString("es-CO", { day: "2-digit", month: "short", year: "numeric" });
+}
+
+let _toastTimer;
+function showToast(msg, type) {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.className   = type === "error" ? "show error" : "show";
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => { t.className = ""; }, 3000);
+}
+</script>
+</body>
+</html>
